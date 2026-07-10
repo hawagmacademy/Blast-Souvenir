@@ -10,9 +10,6 @@ import { defaultLocale, locales, prefixDefaultLocale } from './src/i18n/utils';
 export default defineConfig({
   site: 'https://blast-souvenir-tztr.vercel.app',
   base: '/blast',
-  build: {
-    assets: 'blast/_astro'
-  },
   redirects: {
     '/admin': '/en/admin',
   },
