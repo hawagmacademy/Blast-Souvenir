@@ -1,0 +1,113 @@
+---
+import Layout from '@layouts/Layout.astro';
+import Cta from '@components/pricing/Cta.astro';
+import Faq from '@components/pricing/Faq.astro';
+import Heading from '@components/pricing/Heading.astro';
+import { getLabels, getStaticPaths } from '@i18n/utils';
+
+import { supabase } from '../../lib/db.js';
+
+export { getStaticPaths };
+
+// 2. Ambil info bahasa dari URL dan label i18n bawaan template
+const { lang } = Astro.params;
+const labels = getLabels(Astro.currentLocale, 'pricing');
+
+type Souvenir = {
+  id: number;
+  foto: string;
+  nama: string;
+  harga: number;
+  min_order: number;
+};
+
+// 3. Proses pengambilan data dari database
+let daftarSouvenir: Souvenir[] = [];
+try {
+  const { data, error } = await supabase.from('souvenirs').select('*');
+  if (error) throw error;
+  daftarSouvenir = data as Souvenir[];
+} catch (error) {
+  console.error("Gagal memuat souvenir:", error);
+}
+---
+
+<Layout description={labels.description} title={labels.title}>
+  <Heading />
+
+  <div class="grid-souvenir">
+    {daftarSouvenir.map((produk) => (
+      <div class="card-produk bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 transition-colors">
+        <img src={produk.foto} alt={produk.nama} />
+        <div class="konten-produk">
+          <h3 class="text-[#1a202c] dark:text-white transition-colors">{produk.nama}</h3>
+          <p class="harga text-[#3182ce] dark:text-blue-400 transition-colors">Harga: Rp {produk.harga.toLocaleString('id-ID')} / pcs</p>
+          <p class="min-order text-[#718096] dark:text-slate-400 transition-colors">Min. Order: {produk.min_order} pcs</p>
+          <a href={`/${lang || Astro.currentLocale}/contact?produk=${produk.id}`} class="btn-pesan">
+            Pesan Sekarang
+          </a>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <Faq />
+  <Cta />
+</Layout>
+
+<style>
+  .grid-souvenir {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+  }
+  .card-produk {
+    border: 1px solid var(--tw-border-opacity, #e2e8f0);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+  }
+  .card-produk img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  .konten-produk {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  .card-produk h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+  }
+  .harga {
+    font-weight: bold;
+    margin: 0.5rem 0;
+  }
+  .min-order {
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+  .btn-pesan {
+    display: block;
+    text-align: center;
+    background: #3182ce;
+    color: #fff;
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: auto;
+    transition: background 0.2s;
+  }
+  .btn-pesan:hover {
+    background: #2b6cb0;
+  }
+</style>

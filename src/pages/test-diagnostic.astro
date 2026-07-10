@@ -1,0 +1,97 @@
+---
+const SUPABASE_URL = import.meta.env.SUPABASE_URL || '';
+const SUPABASE_KEY = import.meta.env.SUPABASE_KEY || '';
+const REST_URL = `${SUPABASE_URL}/rest/v1`;
+
+let envCheck = {
+  urlFound: !!SUPABASE_URL,
+  urlValue: SUPABASE_URL,
+  keyFound: !!SUPABASE_KEY,
+  keyLength: SUPABASE_KEY?.length || 0,
+  keyPrefix: SUPABASE_KEY?.substring(0, 10) || 'N/A',
+};
+
+// Test 1: Raw fetch to Supabase to check connection
+let rawResponse = null;
+let rawError = null;
+try {
+  const res = await fetch(`${REST_URL}/souvenirs?select=*`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+    },
+  });
+  rawResponse = {
+    status: res.status,
+    statusText: res.statusText,
+    headers: Object.fromEntries(res.headers.entries()),
+    body: await res.text(),
+  };
+} catch (e) {
+  rawError = { message: e.message, stack: e.stack };
+}
+
+// Test 2: Raw fetch INSERT
+let insertResponse = null;
+let insertError = null;
+try {
+  const res = await fetch(`${REST_URL}/souvenirs`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify([{
+      foto: 'https://placehold.co/100',
+      nama: 'Diagnostic Test',
+      harga: 1000,
+      min_order: 1
+    }]),
+  });
+  insertResponse = {
+    status: res.status,
+    statusText: res.statusText,
+    body: await res.text(),
+  };
+} catch (e) {
+  insertError = { message: e.message, stack: e.stack };
+}
+---
+
+<html>
+<head><title>Full Diagnostic</title></head>
+<body style="font-family: monospace; padding: 20px; background: #0f172a; color: #f8fafc; font-size: 13px;">
+  <h1 style="color: #38bdf8;">Supabase Full Diagnostic</h1>
+
+  <h2 style="color: #fbbf24;">1. Environment Variables</h2>
+  <pre style="background: #1e293b; padding: 15px; border-radius: 8px; overflow: auto; border: 1px solid #334155;">
+{JSON.stringify(envCheck, null, 2)}
+  </pre>
+
+  <h2 style="color: #fbbf24;">2. SELECT Test (Raw Fetch)</h2>
+  {rawError ? (
+    <pre style="background: #7f1d1d; padding: 15px; border-radius: 8px; overflow: auto;">
+ERROR: {JSON.stringify(rawError, null, 2)}
+    </pre>
+  ) : (
+    <pre style="background: #1e293b; padding: 15px; border-radius: 8px; overflow: auto; border: 1px solid #334155;">
+Status: {rawResponse?.status} {rawResponse?.statusText}
+Body: {rawResponse?.body}
+    </pre>
+  )}
+
+  <h2 style="color: #fbbf24;">3. INSERT Test (Raw Fetch)</h2>
+  {insertError ? (
+    <pre style="background: #7f1d1d; padding: 15px; border-radius: 8px; overflow: auto;">
+ERROR: {JSON.stringify(insertError, null, 2)}
+    </pre>
+  ) : (
+    <pre style="background: #1e293b; padding: 15px; border-radius: 8px; overflow: auto; border: 1px solid #334155;">
+Status: {insertResponse?.status} {insertResponse?.statusText}
+Body: {insertResponse?.body}
+    </pre>
+  )}
+</body>
+</html>

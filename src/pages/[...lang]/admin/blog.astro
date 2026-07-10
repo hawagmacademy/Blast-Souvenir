@@ -1,0 +1,320 @@
+---
+import AdminLayout from '@components/admin/AdminLayout.astro';
+import { supabase } from '../../../lib/db.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { defaultLocale } from '@i18n/utils';
+export { getStaticPaths } from '@i18n/utils';
+export const prerender = false;
+
+const { lang } = Astro.params;
+const currentLocale = lang || Astro.currentLocale || defaultLocale;
+const basePath = (import.meta.env.BASE_URL ?? '/blast').replace(/\/$/, '');
+const dashboardUrl = `/blast/${currentLocale}/admin`;
+const pesanUrl = `/blast/${currentLocale}/admin/pesan`;
+const blogUrl = `/blast/${currentLocale}/admin/blog`;
+
+type Post = {
+  id: number;
+  title?: string | null;
+  slug?: string | null;
+  image_url?: string | null;
+  content?: string | null;
+  created_at?: string | null;
+  published_at?: string | null;
+};
+
+let posts: Post[] = [];
+let statusMessage = '';
+let isEdit = false;
+let editingPost: Post | null = null;
+let formTitle = '';
+let formImageUrl = '';
+let formContent = '';
+
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.resolve(currentDir, '../../../../public/uploads');
+await fs.mkdir(uploadsDir, { recursive: true });
+
+const makeSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+
+const formatDate = (value?: string | null) => {
+  if (!value) return '-';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+try {
+  const { data, error } = await supabase.from('posts').select('*').order('id', { ascending: false });
+  if (error) throw error;
+  posts = data as Post[];
+} catch (error) {
+  console.error('Gagal memuat data blog:', error);
+}
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const action = String(formData.get('action') || '');
+  const id = Number(formData.get('id') || 0);
+  const title = String(formData.get('title') || '').trim();
+  const content = String(formData.get('content') || '').trim();
+  let imageUrl = String(formData.get('existing_image_url') || '').trim();
+
+  const uploadedFile = formData.get('image_file');
+  if (uploadedFile instanceof File && uploadedFile.size > 0) {
+    const safeName = String(uploadedFile.name).replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const filename = `${Date.now()}-${safeName}`;
+    const filePath = path.join(uploadsDir, filename);
+    const arrayBuffer = await uploadedFile.arrayBuffer();
+    await fs.writeFile(filePath, Buffer.from(arrayBuffer));
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    imageUrl = `${baseUrl.replace(/\/$/, '')}/uploads/${filename}`;
+  }
+
+  try {
+    if (action === 'save' && title) {
+      const slug = makeSlug(title);
+      if (id) {
+        const { error: updateError } = await supabase
+          .from('posts')
+          .update({ title, slug, image_url: imageUrl, content })
+          .eq('id', id);
+        if (updateError) throw updateError;
+        statusMessage = 'Artikel berhasil diperbarui.';
+      } else {
+        const { error: insertError } = await supabase
+          .from('posts')
+          .insert([{ title, slug, image_url: imageUrl, content }]);
+        if (insertError) throw insertError;
+        statusMessage = 'Artikel berhasil ditambahkan.';
+      }
+
+      const { data: refreshData, error: refreshError } = await supabase.from('posts').select('*').order('id', { ascending: false });
+      if (!refreshError) posts = refreshData as Post[];
+      
+      // Clear form after success if not editing
+      if (!id) {
+         formTitle = '';
+         formContent = '';
+         formImageUrl = '';
+      }
+    } else if (action === 'delete' && id) {
+      const { error: deleteError } = await supabase.from('posts').delete().eq('id', id);
+      if (deleteError) throw deleteError;
+      statusMessage = 'Artikel berhasil dihapus.';
+      const { data: refreshData, error: refreshError } = await supabase.from('posts').select('*').order('id', { ascending: false });
+      if (!refreshError) posts = refreshData as Post[];
+    } else if (action === 'edit' && id) {
+      const { data: editData, error: editError } = await supabase.from('posts').select('*').eq('id', id).single();
+      if (!editError && editData) {
+        editingPost = editData as Post;
+        isEdit = true;
+        formTitle = editingPost.title || '';
+        formImageUrl = editingPost.image_url || '';
+        formContent = editingPost.content || '';
+      }
+    }
+  } catch (error) {
+    console.error('Gagal memproses artikel blog:', error);
+    statusMessage = 'Terjadi kesalahan saat memproses artikel.';
+  }
+}
+
+if (Astro.request.method === 'GET') {
+  const url = new URL(Astro.request.url);
+  const editId = Number(url.searchParams.get('edit') || 0);
+  if (editId) {
+    try {
+      const { data: editData, error: editError } = await supabase.from('posts').select('*').eq('id', editId).single();
+      if (!editError && editData) {
+        editingPost = editData as Post;
+        isEdit = true;
+        formTitle = editingPost.title || '';
+        formImageUrl = editingPost.image_url || '';
+        formContent = editingPost.content || '';
+      }
+    } catch (error) {
+      console.error('Gagal memuat artikel untuk edit:', error);
+    }
+  }
+}
+---
+
+<AdminLayout currentLocale={currentLocale} activeMenu="blog" pageTitle="Blog Admin">
+
+  <!-- Header Section -->
+  <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+     <div>
+       <p class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-[0.2em] mb-1">
+         Content Studio
+       </p>
+       <h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 mb-2 tracking-tight">
+         Kelola Artikel Blog
+       </h1>
+       <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">
+         Buat dan kelola konten edukasi seputar souvenir untuk pengunjung website Anda.
+       </p>
+     </div>
+  </header>
+
+  <!-- Notification Alert -->
+  {statusMessage ? (
+    <div class="mb-8 p-4 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center gap-3 text-sm font-bold shadow-lg transition-colors duration-300">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      {statusMessage}
+    </div>
+  ) : null}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Form Content Section (Left) -->
+    <div class="lg:col-span-1">
+       <div class="bg-white dark:bg-[#1c2541] rounded-2xl p-6 border border-slate-200 dark:border-[#2a3454] shadow-xl transition-colors duration-300 sticky top-6">
+         <div class="mb-6 border-b border-slate-200 dark:border-[#2a3454] pb-4">
+            <h2 class="text-lg font-black text-slate-800 dark:text-white">{isEdit ? 'Edit Artikel' : 'Tulis Artikel Baru'}</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{isEdit ? 'Ubah konten artikel di bawah.' : 'Publikasikan artikel baru.'}</p>
+         </div>
+
+         <form method="POST" enctype="multipart/form-data" class="space-y-5">
+           <input type="hidden" name="action" value="save" />
+           {editingPost ? <input type="hidden" name="id" value={editingPost.id} /> : null}
+           {isEdit && formImageUrl ? <input type="hidden" name="existing_image_url" value={formImageUrl} /> : null}
+
+           <div class="space-y-2">
+             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Judul Artikel <span class="text-red-500">*</span></label>
+             <input 
+               type="text" 
+               name="title" 
+               value={formTitle} 
+               required 
+               class="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#0b1329] border border-slate-300 dark:border-[#2a3454] text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all text-sm"
+               placeholder="Judul menarik..."
+             />
+           </div>
+
+           <div class="space-y-2">
+             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Cover Artikel</label>
+             <input 
+               type="file" 
+               name="image_file" 
+               accept="image/*" 
+               class="w-full px-3 py-2 bg-slate-50 dark:bg-[#0b1329] border border-slate-300 dark:border-[#2a3454] text-slate-900 dark:text-white rounded-lg outline-none text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-purple-100 file:text-purple-700 dark:file:bg-purple-500/20 dark:file:text-purple-400 hover:file:bg-purple-200 dark:hover:file:bg-purple-500/30 cursor-pointer"
+             />
+             {isEdit && formImageUrl && (
+               <div class="mt-3 p-2 bg-slate-50 dark:bg-[#0b1329] rounded border border-slate-200 dark:border-[#2a3454]">
+                 <p class="text-[10px] font-bold text-slate-500 uppercase mb-2">Cover Saat Ini</p>
+                 <img src={formImageUrl} alt={formTitle} class="w-full h-32 object-cover rounded shadow-sm border border-slate-300 dark:border-[#2a3454]" />
+               </div>
+             )}
+           </div>
+
+           <div class="space-y-2">
+             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Isi Konten <span class="text-red-500">*</span></label>
+             <div class="text-[11px] bg-purple-50 dark:bg-purple-500/10 text-slate-700 dark:text-slate-300 p-3 rounded-lg border border-purple-200 dark:border-purple-500/20 space-y-2 mb-2 leading-relaxed">
+               <p><strong class="text-purple-700 dark:text-purple-400">Optimasi AI Overview:</strong> 3 kalimat pertama pada paragraf pembuka HARUS secara langsung, lugas, dan komprehensif menjawab pertanyaan utama (Main Questions Answered).</p>
+               <p><strong class="text-purple-700 dark:text-purple-400">Gaya Penulisan:</strong> Terapkan teknik 'Piramida Terbalik'. Tempatkan informasi paling krusial (5W+1H) di paragraf awal, detail pendukung di bagian tengah, dan informasi tambahan di akhir.</p>
+               <p><strong class="text-purple-700 dark:text-purple-400">Panjang Kata:</strong> Artikel harus berjumlah ketat antara 700 hingga 900 kata.</p>
+               <p><strong class="text-purple-700 dark:text-purple-400">Struktur Heading (H2 & H3):</strong> Artikel wajib menggunakan hierarki heading yang logis. Gunakan H2 untuk membagi poin utama atau sub-topik besar, dan gunakan H3 untuk memecah H2 menjadi detail yang lebih spesifik. Pastikan heading mengandung variasi keyword yang relevan secara natural.</p>
+             </div>
+             <textarea 
+               name="content" 
+               rows="8" 
+               required 
+               class="w-full px-4 py-3 bg-slate-50 dark:bg-[#0b1329] border border-slate-300 dark:border-[#2a3454] text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 outline-none transition-all text-sm leading-relaxed resize-none custom-scrollbar"
+               placeholder="Tulis artikel di sini..."
+             >{formContent}</textarea>
+           </div>
+
+           <div class="pt-4 border-t border-slate-200 dark:border-[#2a3454] flex gap-3">
+             <button type="submit" class="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-lg shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all">
+               {isEdit ? 'Simpan' : 'Publish'}
+             </button>
+             {isEdit && (
+               <a href={`/blast/${currentLocale}/admin/blog`} class="px-4 py-2.5 bg-slate-200 dark:bg-[#2a3454] hover:bg-slate-300 dark:hover:bg-[#3a4773] text-slate-700 dark:text-slate-200 text-sm font-bold rounded-lg transition-all text-center">Batal</a>
+             )}
+           </div>
+         </form>
+       </div>
+    </div>
+
+    <!-- Article List (Right) -->
+    <div class="lg:col-span-2">
+       {posts.length === 0 ? (
+         <div class="bg-white dark:bg-[#1c2541] rounded-2xl p-10 border border-slate-200 dark:border-[#2a3454] text-center shadow-xl">
+            <svg class="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+            <h3 class="text-lg font-bold text-slate-700 dark:text-slate-300 mb-1">Belum ada artikel</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Gunakan form di sebelah kiri untuk menulis artikel pertama Anda.</p>
+         </div>
+       ) : (
+         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+           {posts.map(post => (
+             <div class="group bg-white dark:bg-[#1c2541] rounded-xl border border-slate-200 dark:border-[#2a3454] shadow-md hover:shadow-xl hover:border-purple-300 dark:hover:border-purple-500/40 overflow-hidden flex flex-col transition-all duration-300 relative">
+                <!-- Cover Image -->
+                <div class="relative h-40 bg-slate-100 dark:bg-[#0b1329] overflow-hidden border-b border-slate-200 dark:border-[#2a3454]">
+                   {post.image_url ? (
+                     <img src={post.image_url} alt={post.title || 'Cover'} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                   ) : (
+                     <div class="w-full h-full flex items-center justify-center">
+                       <svg class="w-10 h-10 text-slate-300 dark:text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
+                     </div>
+                   )}
+                   <div class="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
+                      <!-- Edit Icon Button -->
+                      <a href={`/blast/${currentLocale}/admin/blog?edit=${post.id}`} class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-blue-600 hover:scale-110 transition-all" title="Edit Artikel">
+                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                      </a>
+                      <!-- Delete Icon Button -->
+                      <form method="POST" class="m-0" onsubmit="return confirm('Hapus artikel ini?')">
+                         <input type="hidden" name="action" value="delete" />
+                         <input type="hidden" name="id" value={post.id} />
+                         <button type="submit" class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 hover:scale-110 transition-all" title="Hapus Artikel">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                         </button>
+                      </form>
+                   </div>
+                </div>
+                
+                <!-- Content Details -->
+                <div class="p-5 flex-1 flex flex-col">
+                   <div class="flex items-center gap-2 mb-2">
+                     <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 rounded uppercase tracking-wider">{formatDate(post.published_at || post.created_at)}</span>
+                   </div>
+                   <h3 class="text-base font-bold text-slate-900 dark:text-white leading-tight mb-2 line-clamp-2">{post.title || 'Tanpa Judul'}</h3>
+                   <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed mt-auto">{post.content || '...'}</p>
+                </div>
+             </div>
+           ))}
+         </div>
+       )}
+    </div>
+
+  </div>
+
+</AdminLayout>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+  }
+</style>

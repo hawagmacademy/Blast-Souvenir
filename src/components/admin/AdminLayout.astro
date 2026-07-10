@@ -1,0 +1,167 @@
+---
+import '@styles/global.css';
+import { Font } from 'astro:assets';
+
+interface Props {
+  currentLocale: string;
+  activeMenu?: string;
+  pageTitle?: string;
+}
+
+const { currentLocale, activeMenu = 'dashboard', pageTitle = 'Admin Dashboard' } = Astro.props;
+const dashboardUrl = `/blast/${currentLocale}/admin`;
+const pesanUrl = `/blast/${currentLocale}/admin/pesan`;
+const tambahUrl = `/blast/${currentLocale}/admin/tambah`;
+const blogUrl = `/blast/${currentLocale}/admin/blog`;
+
+const menuItems = [
+  { id: 'dashboard', label: 'Dashboard', href: dashboardUrl, icon: 'home' },
+  { id: 'pesan', label: 'Daftar Pesan Masuk', href: pesanUrl, icon: 'chat' },
+  { id: 'tambah', label: 'Tambah Souvenir', href: tambahUrl, icon: 'plus' },
+  { id: 'blog', label: 'Blog Admin', href: blogUrl, icon: 'blog' },
+];
+---
+
+<!DOCTYPE html>
+<html lang={currentLocale} class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{pageTitle} · FlexAdmin</title>
+  <Font cssVariable="--font-inter" preload />
+  <script is:inline>
+    ;(() => {
+      const theme = localStorage.getItem('admin-theme');
+      if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+</head>
+<body class="bg-slate-100 dark:bg-[#0b1329] text-slate-900 dark:text-white antialiased font-sans flex h-screen overflow-hidden transition-colors duration-300">
+  
+  <!-- Left Sidebar -->
+  <aside class="w-[280px] bg-white dark:bg-[#1c2541] flex flex-col justify-between border-r border-slate-200 dark:border-[#2a3454] h-full flex-shrink-0 relative z-20 shadow-xl dark:shadow-2xl transition-colors duration-300">
+     <!-- Brand Header -->
+     <div class="px-7 py-8 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.6)]"></div>
+        <span class="text-xl font-bold tracking-widest text-slate-800 dark:text-slate-100 uppercase">FlexAdmin</span>
+     </div>
+
+     <!-- Vertical Navigation -->
+     <div class="flex-1 px-5 flex flex-col gap-2 overflow-y-auto admin-scrollbar">
+       <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-[0.2em] mb-3 ml-2 uppercase">Menu Utama</div>
+       
+       {menuItems.map((item) => {
+         const isActive = activeMenu === item.id;
+         const activeClass = isActive
+           ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+           : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#252f4d] border border-transparent';
+         return (
+           <a href={item.href} class={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeClass}`}>
+             {item.icon === 'home' && (
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+             )}
+             {item.icon === 'chat' && (
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+             )}
+             {item.icon === 'plus' && (
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+             )}
+             {item.icon === 'blog' && (
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+             )}
+             <span class="font-semibold text-sm tracking-wide">{item.label}</span>
+             {isActive && (
+               <span class="ml-auto bg-cyan-500 text-[#0b1329] text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Active</span>
+             )}
+           </a>
+         );
+       })}
+     </div>
+
+     <!-- Footer Actions (Theme & Language) -->
+     <div class="p-5 border-t border-slate-200 dark:border-[#2a3454] flex items-center justify-between bg-slate-50 dark:bg-[#18213b] transition-colors duration-300">
+       <div class="flex items-center gap-3">
+         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black shadow-lg text-sm">
+           AD
+         </div>
+         <div class="flex flex-col">
+            <span class="text-sm font-bold text-slate-800 dark:text-slate-100">Admin</span>
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider">Product Admin</span>
+         </div>
+       </div>
+
+       <div class="flex flex-col gap-2 items-end">
+          <!-- Theme Toggle -->
+          <button type="button" id="theme-toggle-btn" class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 dark:bg-[#0b1329] text-amber-500 dark:text-yellow-400 border border-slate-300 dark:border-[#2a3454] shadow-inner hover:scale-110 transition-transform" title="Toggle Dark/Light Mode">
+             <!-- Moon icon (visible in dark) -->
+             <svg id="icon-moon" class="w-4 h-4 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+             <!-- Sun icon (visible in light) -->
+             <svg id="icon-sun" class="w-4 h-4 block dark:hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
+          </button>
+          
+          <!-- Lang Toggle -->
+          <div class="flex bg-slate-200 dark:bg-[#0b1329] rounded-lg p-[3px] border border-slate-300 dark:border-[#2a3454] shadow-inner">
+             <a id="lang-idn" href={`/blast/id/admin`} class={`px-2 py-1 text-[9px] font-black tracking-wider uppercase rounded transition ${currentLocale === 'id' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>IDN</a>
+             <a id="lang-eng" href={`/blast/en/admin`} class={`px-2 py-1 text-[9px] font-black tracking-wider uppercase rounded transition ${currentLocale === 'en' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>ENG</a>
+          </div>
+       </div>
+     </div>
+  </aside>
+
+  <!-- Right Main Content Area -->
+  <main class="flex-1 overflow-y-auto h-full p-6 md:p-10 admin-scrollbar relative">
+    <slot />
+  </main>
+
+  <!-- Client Scripts -->
+  <script is:inline>
+    // Theme Toggle
+    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
+      const html = document.documentElement;
+      const isDark = html.classList.contains('dark');
+      if (isDark) {
+        html.classList.remove('dark');
+        localStorage.setItem('admin-theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('admin-theme', 'dark');
+      }
+    });
+
+    // Language Toggle
+    document.getElementById('lang-idn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const path = window.location.pathname;
+      const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/id/');
+      window.location.href = newPath + window.location.search;
+    });
+    document.getElementById('lang-eng')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const path = window.location.pathname;
+      const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/en/');
+      window.location.href = newPath + window.location.search;
+    });
+  </script>
+</body>
+</html>
+
+<style is:global>
+  .admin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .admin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .admin-scrollbar::-webkit-scrollbar-thumb {
+    background: #2a3454;
+    border-radius: 10px;
+  }
+  .admin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #3a4773;
+  }
+</style>

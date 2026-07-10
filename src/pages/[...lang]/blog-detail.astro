@@ -1,0 +1,135 @@
+---
+import Layout from '@layouts/Layout.astro';
+import { supabase } from '../../lib/db.js';
+import { defaultLocale } from '@i18n/utils';
+export { getStaticPaths } from '@i18n/utils';
+export const prerender = false;
+
+const currentLocale = Astro.currentLocale || defaultLocale;
+const basePath = (import.meta.env.BASE_URL ?? '/blast').replace(/\/$/, '');
+const slug = String(Astro.url.searchParams.get('slug') || '').trim();
+
+let post = null;
+if (slug) {
+  const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).single();
+  if (!error && data) {
+    post = data;
+  }
+}
+
+const formatDate = (value?: string | null) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
+import { marked } from 'marked';
+
+// Konfigurasi marked agar mendukung single line breaks jika diperlukan
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+/**
+ * Fungsi Pintar untuk membersihkan dan menata teks yang berantakan (tanpa enter/format).
+ * Mengotomatisasi pembuatan <p>, <h2>, <h3>, <ul>, <li>, dan <strong>.
+ */
+function smartFormat(text: string) {
+  if (!text) return '';
+  let str = text;
+
+  // Jika teks dari database tidak memiliki newline (satu paragraf raksasa)
+  if (!str.includes('\n') || str.split('\n').length <= 3) {
+    // 1. Deteksi Heading H2 (Pertanyaan Utama)
+    // Mencari kalimat tanya (Tanda Tanya diakhiri spasi) dan mengubahnya jadi ##
+    str = str.replace(/(?:^|[\.\?]\s+)([A-Z][^\.]+?\?)(?=\s+[A-Z])/g, (match, p1) => {
+      return `\n\n## ${p1}\n\n`;
+    });
+
+    // 2. Deteksi Subjudul H3 / Kata Penting yang diikuti titik dua
+    // Contoh: "Apresiasi Karyawan (Employee Engagement):" -> ### Apresiasi Karyawan...
+    str = str.replace(/(?:^|[\.\?]\s+)([A-Z][a-zA-Z\s\(\)]+:)\s+(?=[A-Z])/g, (match, p1) => {
+      return `\n\n### ${p1.replace(':', '')}\n\n`;
+    });
+
+    // 3. Deteksi Poin-Poin/Daftar Angka (1. , 2. , 3. )
+    str = str.replace(/(?:^|[\.\?]\s+)(\d+\.\s+[A-Z])/g, (match, p1) => {
+      return `\n${p1}`;
+    });
+
+    // 4. Deteksi Kata Penting untuk ditebalkan (<strong>)
+    // Misal: "Top of mind", "Welcome kit"
+    const importantWords = ['Brand Awareness', 'Top of mind', 'Welcome kit', 'Employee Engagement'];
+    importantWords.forEach(word => {
+      const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+      str = str.replace(regex, '**$1**');
+    });
+  }
+
+  // Memaksa single newline (\n) menjadi double newline (\n\n) agar marked membungkusnya jadi <p>
+  // kecuali jika baris tersebut adalah bagian dari list (angka/strip)
+  const lines = str.replace(/\r\n/g, '\n').split('\n');
+  const spacedLines = lines.map(line => {
+    const t = line.trim();
+    if (t.match(/^(#|\d+\.|-|\*)/)) {
+      return t;
+    }
+    return t ? `${t}\n` : ''; 
+  });
+
+  return spacedLines.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+// Pastikan post.content diproses dulu oleh smartFormat, baru di-parse oleh marked
+const rawText = post ? (post.content || '') : '';
+const formattedText = smartFormat(rawText);
+const parsedContent = await marked.parse(formattedText);
+---
+
+<Layout description={post?.title ?? 'Detail artikel blog'} title={post?.title ?? 'Blog Detail'}>
+  <section class="mx-auto max-w-3xl py-10 px-4 sm:px-6 lg:px-8">
+    <a
+      href={`${basePath}/${currentLocale}/blog`}
+      class="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+    >
+      &lt; Kembali ke Blog
+    </a>
+
+    {post ? (
+      <article class="mt-10 space-y-8">
+        <div class="overflow-hidden rounded-xl bg-slate-100 shadow-sm">
+          <img
+            src={post.image_url ?? `${basePath}/placeholder.jpg`}
+            alt={post.title ?? 'Artikel blog'}
+            class="w-full object-cover"
+          />
+        </div>
+
+        <div class="space-y-4">
+          <div class="text-sm font-medium uppercase tracking-[0.25em] text-sky-600">Blog</div>
+          <h1 class="text-4xl font-bold tracking-tight text-gray-900 dark:text-slate-100">{post.title ?? 'Tanpa Judul'}</h1>
+          <div class="text-sm text-slate-500 dark:text-slate-400">{formatDate(post.published_at ?? post.created_at)}</div>
+          <div class="whitespace-pre-line leading-relaxed text-gray-300 text-base max-w-none 
+                      prose prose-invert 
+                      prose-headings:text-white prose-headings:font-bold 
+                      prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 
+                      prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-2 
+                      prose-p:mb-6"
+               set:html={parsedContent}>
+          </div>
+        </div>
+      </article>
+    ) : (
+      <div class="mt-10 rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+        <h2 class="text-2xl font-semibold">Artikel tidak ditemukan</h2>
+        <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">Slug artikel tidak valid atau artikel belum tersedia.</p>
+      </div>
+    )}
+  </section>
+</Layout>

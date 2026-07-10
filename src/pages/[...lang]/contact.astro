@@ -1,0 +1,70 @@
+---
+import Layout from '@layouts/Layout.astro';
+import ContactForm from '@components/contact/ContactForm.astro';
+import ContactInfo from '@components/contact/ContactInfo.astro';
+import { getLabels } from '@i18n/utils';
+
+import { supabase } from '../../lib/db.js';
+
+export const prerender = false;
+
+const labels = getLabels(Astro.currentLocale, 'contact');
+
+let statusPesan = "";
+
+// 2. Logika Backend untuk menangkap data Form saat di-submit
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    
+    const nama = String(formData.get('nama') || '').trim();
+    const perusahaan = String(formData.get('perusahaan') || '').trim();
+    const email = String(formData.get('email') || '').trim();
+    const pesan = String(formData.get('pesan') || '').trim();
+
+    const { error: insertError } = await supabase
+      .from('permintaan_souvenir')
+      .insert([{ nama, perusahaan, email, pesan }]);
+
+    if (insertError) throw insertError;
+
+    statusPesan = 'Sukses! Permintaan penawaran Anda telah dikirim.';
+  } catch (error) {
+    console.error('Detail Error DB:', error);
+    statusPesan = 'Gagal mengirim permintaan. Silakan coba lagi.';
+  }
+}
+---
+
+<Layout description={labels.description} title={labels.title}>
+  <script
+    slot="head"
+    is:inline
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad"
+    async
+    defer></script>
+  
+  {statusPesan && (
+    <div class="notif-box">
+      <p>{statusPesan}</p>
+    </div>
+  )}
+
+  <ContactInfo />
+  
+  <ContactForm />
+</Layout>
+
+<style>
+  .notif-box {
+    max-width: 600px;
+    margin: 2rem auto -1rem auto;
+    padding: 1rem;
+    background-color: #ebf8ff;
+    border-left: 4px solid #3182ce;
+    color: #2b6cb0;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+  }
+</style>
