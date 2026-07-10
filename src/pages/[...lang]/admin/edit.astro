@@ -21,10 +21,7 @@ const currentLocale = lang || Astro.currentLocale || defaultLocale;
 const dashboardUrl = `/blast/${currentLocale}/admin`;
 const idParam = Number(Astro.url.searchParams.get('id') ?? 0);
 
-const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(currentDir, '../../../../public/uploads');
-await fs.mkdir(uploadsDir, { recursive: true });
-
+// Moving fs operations inside POST block to prevent Vercel 500 error on page load
 let souvenir: Souvenir = {
   id: idParam,
   foto: '',
@@ -63,13 +60,21 @@ if (Astro.request.method === 'POST' && !errorMessage) {
   let foto = souvenir.foto;
   const uploadedFile = formData.get('foto');
   if (uploadedFile instanceof File && uploadedFile.size > 0) {
-    const safeName = String(uploadedFile.name).replace(/[^a-zA-Z0-9.\-_]/g, '_');
-    const filename = `${Date.now()}-${safeName}`;
-    const filePath = path.join(uploadsDir, filename);
-    const arrayBuffer = await uploadedFile.arrayBuffer();
-    await fs.writeFile(filePath, Buffer.from(arrayBuffer));
-    const baseUrl = import.meta.env.BASE_URL || '/';
-    foto = `${baseUrl.replace(/\/$/, '')}/uploads/${filename}`;
+    try {
+      const currentDir = path.dirname(fileURLToPath(import.meta.url));
+      const uploadsDir = path.resolve(currentDir, '../../../../public/uploads');
+      await fs.mkdir(uploadsDir, { recursive: true });
+      
+      const safeName = String(uploadedFile.name).replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const filename = `${Date.now()}-${safeName}`;
+      const filePath = path.join(uploadsDir, filename);
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+      await fs.writeFile(filePath, Buffer.from(arrayBuffer));
+      const baseUrl = import.meta.env.BASE_URL || '/';
+      foto = `${baseUrl}uploads/${filename}`;
+    } catch (err) {
+      console.error('File upload failed (likely due to read-only filesystem on Vercel):', err);
+    }
   }
 
   try {
