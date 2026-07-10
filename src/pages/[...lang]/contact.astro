@@ -45,8 +45,15 @@ if (Astro.request.method === 'POST') {
     defer></script>
   
   {statusPesan && (
-    <div class="notif-box">
-      <p>{statusPesan}</p>
+    <div class="mx-auto mt-12 max-w-2xl px-4 sm:px-6 lg:px-8">
+      <div class={`p-4 rounded-xl flex items-center justify-center gap-3 text-sm font-bold shadow-lg transition-colors duration-300 ${statusPesan.includes('Sukses') ? 'bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-500/10 border border-red-300 dark:border-red-500/20 text-red-700 dark:text-red-400'}`}>
+        {statusPesan.includes('Sukses') ? (
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        ) : (
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-8.33-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+        )}
+        <p class="m-0 text-center">{statusPesan}</p>
+      </div>
     </div>
   )}
 
@@ -54,17 +61,3 @@ if (Astro.request.method === 'POST') {
   
   <ContactForm />
 </Layout>
-
-<style>
-  .notif-box {
-    max-width: 600px;
-    margin: 2rem auto -1rem auto;
-    padding: 1rem;
-    background-color: #ebf8ff;
-    border-left: 4px solid #3182ce;
-    color: #2b6cb0;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: 500;
-  }
-</style>
