@@ -1,0 +1,16 @@
+{
+    "routes": [
+        {
+            "src": "/$",
+            "dest": "/blast/id/"
+        },
+        {
+            "src": "/id$",
+            "dest": "/blast/id/"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/$1"
+        }
+    ]
+}
