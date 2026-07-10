@@ -61,17 +61,10 @@ if (Astro.request.method === 'POST' && !errorMessage) {
   const uploadedFile = formData.get('foto');
   if (uploadedFile instanceof File && uploadedFile.size > 0) {
     try {
-      const currentDir = path.dirname(fileURLToPath(import.meta.url));
-      const uploadsDir = path.resolve(currentDir, '../../../../public/uploads');
-      await fs.mkdir(uploadsDir, { recursive: true });
-      
-      const safeName = String(uploadedFile.name).replace(/[^a-zA-Z0-9.\-_]/g, '_');
-      const filename = `${Date.now()}-${safeName}`;
-      const filePath = path.join(uploadsDir, filename);
       const arrayBuffer = await uploadedFile.arrayBuffer();
-      await fs.writeFile(filePath, Buffer.from(arrayBuffer));
-      const baseUrl = import.meta.env.BASE_URL || '/';
-      foto = `${baseUrl}uploads/${filename}`;
+      const base64String = Buffer.from(arrayBuffer).toString('base64');
+      const mimeType = uploadedFile.type || 'image/jpeg';
+      foto = `data:${mimeType};base64,${base64String}`;
     } catch (err) {
       console.error('File upload failed (likely due to read-only filesystem on Vercel):', err);
     }
