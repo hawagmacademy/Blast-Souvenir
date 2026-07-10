@@ -35,15 +35,15 @@ try {
 <Layout description={labels.description} title={labels.title}>
   <Heading />
 
-  <div class="grid-souvenir">
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-8 max-w-[1200px] mx-auto px-4 my-12">
     {daftarSouvenir.map((produk) => (
-      <div class="card-produk bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 transition-colors">
-        <img src={produk.foto} alt={produk.nama} />
-        <div class="konten-produk">
-          <h3 class="text-[#1a202c] dark:text-white transition-colors">{produk.nama}</h3>
-          <p class="harga text-[#3182ce] dark:text-blue-400 transition-colors">Harga: Rp {produk.harga.toLocaleString('id-ID')} / pcs</p>
-          <p class="min-order text-[#718096] dark:text-slate-400 transition-colors">Min. Order: {produk.min_order} pcs</p>
-          <a href={`/${lang || Astro.currentLocale}/contact?produk=${produk.id}`} class="btn-pesan">
+      <div class="flex flex-col border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md bg-white dark:bg-[#1e293b] transition-all duration-300">
+        <img src={produk.foto} alt={produk.nama} class="w-full h-[200px] object-cover" />
+        <div class="p-6 flex flex-col grow">
+          <h3 class="text-xl font-bold mb-2 text-[#1a202c] dark:text-white transition-colors">{produk.nama}</h3>
+          <p class="font-bold text-[#3182ce] dark:text-blue-400 mb-2 transition-colors">Harga: Rp {produk.harga.toLocaleString('id-ID')} / pcs</p>
+          <p class="text-sm text-[#718096] dark:text-slate-400 mb-6 transition-colors">Min. Order: {produk.min_order} pcs</p>
+          <a href={`/${lang || Astro.currentLocale}/contact?produk=${produk.id}`} class="block text-center bg-[#3182ce] hover:bg-[#2b6cb0] text-white font-bold py-3 px-4 rounded-lg mt-auto transition-colors">
             Pesan Sekarang
           </a>
         </div>
@@ -54,60 +54,3 @@ try {
   <Faq />
   <Cta />
 </Layout>
-
-<style>
-  .grid-souvenir {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
-    max-width: 1200px;
-    margin: 3rem auto;
-    padding: 0 1rem;
-  }
-  .card-produk {
-    border: 1px solid var(--tw-border-opacity, #e2e8f0);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-  }
-  .card-produk img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-  }
-  .konten-produk {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-  }
-  .card-produk h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.25rem;
-  }
-  .harga {
-    font-weight: bold;
-    margin: 0.5rem 0;
-  }
-  .min-order {
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-  }
-  .btn-pesan {
-    display: block;
-    text-align: center;
-    background: #3182ce;
-    color: #fff;
-    padding: 0.75rem;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: bold;
-    margin-top: auto;
-    transition: background 0.2s;
-  }
-  .btn-pesan:hover {
-    background: #2b6cb0;
-  }
-</style>

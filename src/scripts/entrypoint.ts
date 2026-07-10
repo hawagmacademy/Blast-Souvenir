@@ -49,7 +49,12 @@ const entrypoint = (Alpine: Alpine) => {
     isDark: false,
 
     init() {
-      this.isDark = document.documentElement.classList.contains('dark');
+      this.isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (this.isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     },
 
     toggle() {
