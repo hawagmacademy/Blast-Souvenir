@@ -13,8 +13,16 @@
             "destination": "/uploads/:path*"
         },
         {
-            "source": "/blast/:file([^/]+\\.[a-zA-Z0-9]+)",
-            "destination": "/:file"
+            "source": "/blast/favicon.ico",
+            "destination": "/favicon.ico"
+        },
+        {
+            "source": "/blast/apple-touch-icon.png",
+            "destination": "/apple-touch-icon.png"
+        },
+        {
+            "source": "/blast/logo.svg",
+            "destination": "/logo.svg"
         }
     ],
     "redirects": [
