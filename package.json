@@ -6,7 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "postbuild": "node src/utils/update-csp-hashes.ts",
+    "postbuild": "node src/utils/update-csp-hashes.ts && node scripts/fix-vercel-assets.js",
     "preview": "astro preview",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",

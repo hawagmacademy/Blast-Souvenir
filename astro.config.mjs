@@ -10,6 +10,9 @@ import { defaultLocale, locales, prefixDefaultLocale } from './src/i18n/utils';
 export default defineConfig({
   site: 'https://blast-souvenir-tztr.vercel.app',
   base: '/blast',
+  build: {
+    assets: 'blast/_astro'
+  },
   redirects: {
     '/admin': '/en/admin',
   },
@@ -66,15 +69,13 @@ export default defineConfig({
       scriptDirective: {
         resources: ["'self'", 'data:', 'https://challenges.cloudflare.com/'],
         hashes: [
-          'sha256-/PMeln2yfrl3s6d+0o42HIOvl+l/Fc/l0eqx+Xpyzbw=', // All pages
-          'sha256-AhGOxzJqJwRvnqrHXGGHOAboYLUDRi5UY2RXZQCouYI=', // client
+
         ],
       },
       styleDirective: {
         resources: ["'self'", "'unsafe-inline'"],
         hashes: [
-          'sha256-/fWDvP/zU3HvBkNs4SJCgtfIW+buR1Is+LtIxjWEFpw=', // All pages
-          'sha256-7G07M4gLmuqW441o9XUpQO6cVi4V4095DaJ2PhtCN6s=', // client/fr/pricing, client/pricing
+
         ],
       },
       directives: [
