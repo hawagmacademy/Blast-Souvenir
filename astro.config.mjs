@@ -59,6 +59,7 @@ export default defineConfig({
     }),
   ],
   adapter: vercel(),
+  output: 'server',
 
   security: {
     csp: {
@@ -70,7 +71,7 @@ export default defineConfig({
         ],
       },
       styleDirective: {
-        resources: ["'self'"],
+        resources: ["'self'", "'unsafe-inline'"],
         hashes: [
           'sha256-/fWDvP/zU3HvBkNs4SJCgtfIW+buR1Is+LtIxjWEFpw=', // All pages
           'sha256-7G07M4gLmuqW441o9XUpQO6cVi4V4095DaJ2PhtCN6s=', // client/fr/pricing, client/pricing
