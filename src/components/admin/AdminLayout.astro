@@ -31,7 +31,7 @@ const menuItems = [
   <Font cssVariable="--font-inter" preload />
   <script is:inline>
     ;(() => {
-      const theme = localStorage.getItem('admin-theme');
+      const theme = localStorage.getItem('theme');
       if (theme === 'light') {
         document.documentElement.classList.remove('dark');
       } else {
@@ -125,10 +125,10 @@ const menuItems = [
       const isDark = html.classList.contains('dark');
       if (isDark) {
         html.classList.remove('dark');
-        localStorage.setItem('admin-theme', 'light');
+        localStorage.setItem('theme', 'light');
       } else {
         html.classList.add('dark');
-        localStorage.setItem('admin-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
       }
     });
 

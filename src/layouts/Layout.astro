@@ -38,6 +38,7 @@ const ogImage = await getImage({ src: ogImageSrc });
         
         setTheme();
         document.addEventListener('astro:after-swap', setTheme);
+        document.addEventListener('astro:page-load', setTheme);
       })();
     </script>
     <meta charset="utf-8" />
