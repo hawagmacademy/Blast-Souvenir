@@ -1,12 +1,14 @@
 {
-    "routes": [
+    "redirects": [
         {
-            "src": "/$",
-            "dest": "/blast/id"
+            "source": "/",
+            "destination": "/blast/id",
+            "permanent": true
         },
         {
-            "src": "/blast$",
-            "dest": "/blast/id"
+            "source": "/blast",
+            "destination": "/blast/id",
+            "permanent": true
         }
     ]
 }

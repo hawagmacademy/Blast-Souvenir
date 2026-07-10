@@ -8,7 +8,7 @@ import { defaultLocale, locales, prefixDefaultLocale } from './src/i18n/utils';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://cjoyau.github.io',
+  site: 'https://blast-souvenir-tztr.vercel.app',
   base: '/blast',
   redirects: {
     '/admin': '/en/admin',
