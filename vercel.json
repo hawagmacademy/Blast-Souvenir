@@ -2,15 +2,11 @@
     "routes": [
         {
             "src": "/$",
-            "dest": "/blast/id/"
+            "dest": "/blast/id"
         },
         {
-            "src": "/id$",
-            "dest": "/blast/id/"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/$1"
+            "src": "/blast$",
+            "dest": "/blast/id"
         }
     ]
 }
