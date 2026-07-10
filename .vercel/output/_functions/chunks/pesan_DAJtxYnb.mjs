@@ -1,0 +1,69 @@
+import { t as __exportAll } from "./rolldown-runtime_D7D4PA-g.mjs";
+import { C as createAstro, _ as addAttribute, a as renderComponent, d as renderTemplate, h as maybeRenderHead, w as createComponent } from "./server_DqMh0nkK.mjs";
+import "./compiler_CqZWJY3r.mjs";
+import { r as getStaticPaths } from "./utils_qogIoZEK.mjs";
+import { t as $$AdminLayout } from "./AdminLayout_CBzI-w8L.mjs";
+import { t as supabase } from "./db_DIMXPWFB.mjs";
+//#region src/pages/[...lang]/admin/pesan.astro
+var pesan_exports = /* @__PURE__ */ __exportAll({
+	default: () => $$Pesan,
+	file: () => $$file,
+	getStaticPaths: () => getStaticPaths,
+	prerender: () => false,
+	url: () => $$url
+});
+createAstro("https://blast-souvenir-tztr.vercel.app");
+var $$Pesan = createComponent(async ($$result, $$props, $$slots) => {
+	const Astro = $$result.createAstro($$props, $$slots);
+	Astro.self = $$Pesan;
+	let pesanMasuk = [];
+	let errorMessage = "";
+	try {
+		const { data, error } = await supabase.from("permintaan_souvenir").select("*").order("tanggal_masuk", { ascending: false });
+		if (error) throw error;
+		pesanMasuk = data;
+	} catch (error) {
+		console.error("Gagal memuat pesan masuk:", error);
+		errorMessage = "Gagal memuat pesan masuk. Silakan coba lagi nanti.";
+	}
+	const { lang } = Astro.params;
+	return renderTemplate`${renderComponent($$result, "AdminLayout", $$AdminLayout, {
+		"currentLocale": lang || Astro.currentLocale || "en",
+		"activeMenu": "pesan",
+		"pageTitle": "Pesan Masuk"
+	}, { "default": ($$result) => renderTemplate`${maybeRenderHead($$result)}<header class="mb-10"><p class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-[0.2em] mb-1">Execution Board</p><h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 mb-2 tracking-tight">Daftar Pesan Masuk</h1><p class="text-sm text-slate-500 dark:text-slate-400 font-medium max-w-2xl">Permintaan souvenir yang dikirim oleh pengunjung website. Pantau dan tindak lanjuti setiap pesan.</p></header>${errorMessage ? renderTemplate`<div class="mb-8 p-4 bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-xl flex items-center gap-3 text-sm font-bold"><svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>${errorMessage}</div>` : null}<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"><div class="bg-white dark:bg-[#1c2541] rounded-xl p-5 border border-slate-200 dark:border-[#2a3454] shadow-md transition-colors duration-300"><p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total Pesan</p><h3 class="text-3xl font-black text-slate-900 dark:text-white">${pesanMasuk.length}</h3></div><div class="bg-white dark:bg-[#1c2541] rounded-xl p-5 border border-slate-200 dark:border-[#2a3454] shadow-md transition-colors duration-300"><p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Belum Ditindak</p><h3 class="text-3xl font-black text-amber-600 dark:text-amber-400">${pesanMasuk.length}</h3></div><div class="bg-white dark:bg-[#1c2541] rounded-xl p-5 border border-slate-200 dark:border-[#2a3454] shadow-md transition-colors duration-300"><p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Status</p><div class="flex items-center gap-2 mt-1"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span><span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">Active Monitoring</span></div></div></div>${pesanMasuk.length === 0 ? renderTemplate`<div class="bg-white dark:bg-[#1c2541] rounded-2xl p-10 border border-slate-200 dark:border-[#2a3454] text-center transition-colors duration-300"><p class="text-slate-400 dark:text-slate-500 text-sm font-medium">Tidak ada pesan masuk saat ini.</p></div>` : renderTemplate`<div class="flex flex-col gap-4">${pesanMasuk.map((pesan, index) => {
+		const priorityColors = [
+			"bg-red-500",
+			"bg-amber-500",
+			"bg-cyan-500",
+			"bg-emerald-500",
+			"bg-purple-500"
+		];
+		const priorityLabels = [
+			"High",
+			"Medium",
+			"Normal",
+			"Low",
+			"Normal"
+		];
+		const priorityTextColors = [
+			"text-red-400",
+			"text-amber-400",
+			"text-cyan-400",
+			"text-emerald-400",
+			"text-purple-400"
+		];
+		const colorIdx = index % priorityColors.length;
+		return renderTemplate`<div class="bg-white dark:bg-[#1c2541] rounded-xl p-5 border border-slate-200 dark:border-[#2a3454] shadow-md hover:border-cyan-400 dark:hover:border-cyan-500/30 transition-all duration-300 group"><div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4"><!-- Left content --><div class="flex items-start gap-4 flex-1 min-w-0"><div${addAttribute(`w-1 h-full min-h-[60px] rounded-full ${priorityColors[colorIdx]} flex-shrink-0`, "class")}></div><div class="flex-1 min-w-0"><div class="flex items-center gap-3 mb-2 flex-wrap"><h3 class="text-base font-bold text-slate-800 dark:text-white truncate">${pesan.nama}</h3><span${addAttribute(`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full border ${priorityColors[colorIdx]}/10 ${priorityTextColors[colorIdx]} border-current/20`, "class")}>${priorityLabels[colorIdx]}</span></div><p class="text-[13px] text-slate-500 dark:text-slate-400 mb-1"><span class="font-semibold text-slate-600 dark:text-slate-300">${pesan.perusahaan}</span> · ${pesan.email}</p><p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">${pesan.pesan}</p></div></div><!-- Right meta --><div class="flex flex-col items-end gap-2 flex-shrink-0"><span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">${new Date(pesan.tanggal_masuk).toLocaleString("id-ID", {
+			dateStyle: "medium",
+			timeStyle: "short"
+		})}</span><span class="px-3 py-1 bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/20 text-[10px] font-bold rounded-full uppercase tracking-wider">Pending</span></div></div></div>`;
+	})}</div>`}` })}`;
+}, "D:/blast-main/src/pages/[...lang]/admin/pesan.astro", void 0);
+var $$file = "D:/blast-main/src/pages/[...lang]/admin/pesan.astro";
+var $$url = "/blast/[...lang]/admin/pesan";
+//#endregion
+//#region \0virtual:astro:page:src/pages/[...lang]/admin/pesan@_@astro
+var page = () => pesan_exports;
+//#endregion
+export { page };

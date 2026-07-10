@@ -1,4 +1,22 @@
 {
+    "rewrites": [
+        {
+            "source": "/blast/_astro/:path*",
+            "destination": "/_astro/:path*"
+        },
+        {
+            "source": "/blast/_image",
+            "destination": "/_image"
+        },
+        {
+            "source": "/blast/uploads/:path*",
+            "destination": "/uploads/:path*"
+        },
+        {
+            "source": "/blast/:file([^/]+\\.[a-zA-Z0-9]+)",
+            "destination": "/:file"
+        }
+    ],
     "redirects": [
         {
             "source": "/",
