@@ -23,39 +23,18 @@ const ogImage = await getImage({ src: ogImageSrc });
 ---
 
 <!doctype html>
-<html lang={currentLocale}>
+<html lang={currentLocale} x-data :class="$store.theme.isDark ? 'dark' : ''">
   <head>
     <slot name="head" />
     <script is:inline>
       ;(() => {
-        const enforceTheme = () => {
-          const theme = localStorage.getItem('theme');
-          const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        };
-        enforceTheme();
-        
-        // Prevent Astro View Transitions from stripping the theme class
-        new MutationObserver((mutations) => {
-          mutations.forEach((m) => {
-            if (m.attributeName === 'class') {
-              const theme = localStorage.getItem('theme');
-              const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-              const hasDarkClass = document.documentElement.classList.contains('dark');
-              if (isDark && !hasDarkClass) {
-                document.documentElement.classList.add('dark');
-              } else if (!isDark && hasDarkClass) {
-                document.documentElement.classList.remove('dark');
-              }
-            }
-          });
-        }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        
-        document.addEventListener('astro:after-swap', enforceTheme);
+        const theme = localStorage.getItem('theme');
+        const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       })();
     </script>
     <meta charset="utf-8" />
