@@ -138,32 +138,47 @@ const menuItems = [
 
   <!-- Client Scripts -->
   <script is:inline>
-    // Theme Toggle
-    document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
-      const html = document.documentElement;
-      const isDark = html.classList.contains('dark');
-      if (isDark) {
-        html.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
+    function setupAdminScripts() {
+      // Theme Toggle
+      const themeBtn = document.getElementById('theme-toggle-btn');
+      if (themeBtn) {
+        themeBtn.onclick = () => {
+          const html = document.documentElement;
+          const isDark = html.classList.contains('dark');
+          if (isDark) {
+            html.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+          } else {
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+          }
+        };
       }
-    });
 
-    // Language Toggle
-    document.getElementById('lang-idn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      const path = window.location.pathname;
-      const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/id/');
-      window.location.href = newPath + window.location.search;
-    });
-    document.getElementById('lang-eng')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      const path = window.location.pathname;
-      const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/en/');
-      window.location.href = newPath + window.location.search;
-    });
+      // Language Toggle
+      const langIdn = document.getElementById('lang-idn');
+      if (langIdn) {
+        langIdn.onclick = (e) => {
+          e.preventDefault();
+          const path = window.location.pathname;
+          const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/id/');
+          window.location.href = newPath + window.location.search;
+        };
+      }
+      
+      const langEng = document.getElementById('lang-eng');
+      if (langEng) {
+        langEng.onclick = (e) => {
+          e.preventDefault();
+          const path = window.location.pathname;
+          const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/en/');
+          window.location.href = newPath + window.location.search;
+        };
+      }
+    }
+
+    setupAdminScripts();
+    document.addEventListener('astro:page-load', setupAdminScripts);
   </script>
 </body>
 </html>
