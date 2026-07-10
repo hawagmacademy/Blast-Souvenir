@@ -31,3 +31,7 @@ pnpm-debug.log*
 
 # sonarlint folder
 .sonarlint/
+
+# vercel
+.vercel/
+.vercel
