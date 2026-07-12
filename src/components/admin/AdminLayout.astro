@@ -65,7 +65,7 @@ const menuItems = [
   <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/60 z-30 hidden md:hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm"></div>
 
   <!-- Left Sidebar -->
-  <aside id="admin-sidebar" class="w-[280px] bg-white dark:bg-[#1c2541] flex flex-col justify-between border-r border-slate-200 dark:border-[#2a3454] h-full flex-shrink-0 absolute md:relative z-40 shadow-xl dark:shadow-2xl transition-transform duration-300 -translate-x-full md:translate-x-0">
+  <aside id="admin-sidebar" class="w-[280px] bg-white dark:bg-[#1c2541] flex flex-col justify-between border-r border-slate-200 dark:border-[#2a3454] h-full flex-shrink-0 fixed md:relative left-0 top-0 z-40 shadow-xl dark:shadow-2xl transition-transform duration-300 -translate-x-full md:translate-x-0">
      <!-- Brand Header -->
      <div class="px-7 py-8 flex items-center gap-3">
         <div class="w-9 h-9 rounded-full bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.6)]"></div>
@@ -154,67 +154,103 @@ const menuItems = [
 
   <!-- Client Scripts -->
   <script is:inline>
-    function setupAdminScripts() {
-      // Mobile Sidebar Toggle
-      const mobileBtn = document.getElementById('mobile-menu-btn');
-      const sidebar = document.getElementById('admin-sidebar');
-      const backdrop = document.getElementById('sidebar-backdrop');
-      
-      if (mobileBtn && sidebar && backdrop) {
-        mobileBtn.onclick = () => {
-          sidebar.classList.remove('-translate-x-full');
-          backdrop.classList.remove('hidden');
-          // small delay to allow display block to apply before opacity transition
-          setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
-        };
-        
-        backdrop.onclick = () => {
-          sidebar.classList.add('-translate-x-full');
-          backdrop.classList.add('opacity-0');
-          setTimeout(() => backdrop.classList.add('hidden'), 300);
-        };
+    (function() {
+      function openSidebar() {
+        var sidebar = document.getElementById('admin-sidebar');
+        var backdrop = document.getElementById('sidebar-backdrop');
+        if (!sidebar || !backdrop) return;
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+        backdrop.style.display = 'block';
+        setTimeout(function() { backdrop.classList.remove('opacity-0'); }, 20);
       }
 
-      // Theme Toggle
-      const themeBtn = document.getElementById('theme-toggle-btn');
-      if (themeBtn) {
-        themeBtn.onclick = () => {
-          const html = document.documentElement;
-          const isDark = html.classList.contains('dark');
-          if (isDark) {
-            html.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-          } else {
-            html.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
+      function closeSidebar() {
+        var sidebar = document.getElementById('admin-sidebar');
+        var backdrop = document.getElementById('sidebar-backdrop');
+        if (!sidebar || !backdrop) return;
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('opacity-0');
+        setTimeout(function() {
+          backdrop.classList.add('hidden');
+          backdrop.style.display = '';
+        }, 300);
+      }
+
+      function setupAdminScripts() {
+        // Mobile Sidebar Toggle - use event delegation on body for reliability
+        document.body.addEventListener('click', function(e) {
+          // Open sidebar
+          var menuBtn = e.target.closest('#mobile-menu-btn');
+          if (menuBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            openSidebar();
+            return;
           }
-        };
+
+          // Close sidebar via backdrop
+          if (e.target && e.target.id === 'sidebar-backdrop') {
+            closeSidebar();
+            return;
+          }
+
+          // Close sidebar when clicking a nav link inside sidebar (mobile only)
+          var sidebar = document.getElementById('admin-sidebar');
+          if (sidebar && sidebar.contains(e.target)) {
+            var link = e.target.closest('a');
+            if (link && window.innerWidth < 768) {
+              closeSidebar();
+            }
+          }
+        });
+
+        // Theme Toggle
+        var themeBtn = document.getElementById('theme-toggle-btn');
+        if (themeBtn) {
+          themeBtn.addEventListener('click', function() {
+            var html = document.documentElement;
+            var isDark = html.classList.contains('dark');
+            if (isDark) {
+              html.classList.remove('dark');
+              localStorage.setItem('theme', 'light');
+            } else {
+              html.classList.add('dark');
+              localStorage.setItem('theme', 'dark');
+            }
+          });
+        }
+
+        // Language Toggle
+        var langIdn = document.getElementById('lang-idn');
+        if (langIdn) {
+          langIdn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var p = window.location.pathname;
+            var newPath = p.replace(/\/blast\/(en|id)\//, '/blast/id/');
+            window.location.href = newPath + window.location.search;
+          });
+        }
+        
+        var langEng = document.getElementById('lang-eng');
+        if (langEng) {
+          langEng.addEventListener('click', function(e) {
+            e.preventDefault();
+            var p = window.location.pathname;
+            var newPath = p.replace(/\/blast\/(en|id)\//, '/blast/en/');
+            window.location.href = newPath + window.location.search;
+          });
+        }
       }
 
-      // Language Toggle
-      const langIdn = document.getElementById('lang-idn');
-      if (langIdn) {
-        langIdn.onclick = (e) => {
-          e.preventDefault();
-          const path = window.location.pathname;
-          const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/id/');
-          window.location.href = newPath + window.location.search;
-        };
+      // Ensure DOM is ready before binding
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupAdminScripts);
+      } else {
+        setupAdminScripts();
       }
-      
-      const langEng = document.getElementById('lang-eng');
-      if (langEng) {
-        langEng.onclick = (e) => {
-          e.preventDefault();
-          const path = window.location.pathname;
-          const newPath = path.replace(/\/blast\/(en|id)\//, '/blast/en/');
-          window.location.href = newPath + window.location.search;
-        };
-      }
-    }
-
-    setupAdminScripts();
-    document.addEventListener('astro:page-load', setupAdminScripts);
+      document.addEventListener('astro:page-load', setupAdminScripts);
+    })();
   </script>
 </body>
 </html>
