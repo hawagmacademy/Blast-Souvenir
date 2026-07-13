@@ -14,7 +14,6 @@ export default defineConfig({
     '/admin': '/en/admin',
   },
 
-
   fonts: [
     {
       name: 'Inter',
@@ -64,16 +63,12 @@ export default defineConfig({
   security: {
     csp: {
       scriptDirective: {
-        resources: ["'self'", 'data:', 'https://challenges.cloudflare.com/'],
-        hashes: [
-
-        ],
+        resources: ["'self'", "'unsafe-inline'", 'data:', 'https://challenges.cloudflare.com/'],
+        hashes: [],
       },
       styleDirective: {
         resources: ["'self'", "'unsafe-inline'"],
-        hashes: [
-
-        ],
+        hashes: [],
       },
       directives: [
         "default-src 'self'",
