@@ -250,7 +250,11 @@ const menuItems = [
       }
     }
 
-    // Astro View Transitions lifecycle hook
+    // Astro module scripts run deferred, meaning the DOM is already parsed and ready.
+    // We execute it immediately.
+    setupAdminScripts();
+
+    // Fallback hook just in case <ViewTransitions /> is added to this layout in the future
     document.addEventListener('astro:page-load', setupAdminScripts);
   </script>
 </body>
